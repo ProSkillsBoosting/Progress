@@ -3,155 +3,281 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Трекер</title>
+  <title>Progress Tracker</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       color-scheme: light;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #172033;
-      background: #f5f7fb;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #111827;
+      background: #f6f7f9;
+      font-synthesis: none;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       min-width: 320px;
+      min-height: 100vh;
       margin: 0;
-      padding: 32px clamp(16px, 4vw, 56px) 48px;
-      overflow-x: auto;
+      overflow-x: hidden;
+      background: #f6f7f9;
+    }
+
+    main {
+      width: min(100%, 1600px);
+      margin: 0 auto;
+      padding: 28px clamp(20px, 2.2vw, 32px) 32px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 20px;
     }
 
     h1 {
-      margin: 0 0 20px;
-      font-size: clamp(28px, 4vw, 40px);
-      line-height: 1.1;
-      letter-spacing: -0.03em;
+      margin: 0;
+      font-size: clamp(24px, 2.1vw, 30px);
+      line-height: 1.15;
+      letter-spacing: -0.035em;
+    }
+
+    p {
+      margin: 5px 0 0;
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.4;
     }
 
     button {
-      margin: 0 0 20px;
-      padding: 10px 18px;
-      border: 0;
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 8px 14px;
+      border: 1px solid #d1d5db;
       border-radius: 10px;
-      color: #fff;
-      background: #2563eb;
+      color: #111827;
+      background: #fff;
       font: inherit;
+      font-size: 14px;
       font-weight: 650;
       cursor: pointer;
-      box-shadow: 0 6px 16px rgb(37 99 235 / 22%);
-      transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+      box-shadow: 0 1px 2px rgb(17 24 39 / 5%);
+      transition: background-color 170ms ease, border-color 170ms ease, transform 170ms ease;
     }
 
     button:hover:not(:disabled) {
-      background: #1d4ed8;
-      box-shadow: 0 8px 20px rgb(37 99 235 / 28%);
+      border-color: #b9bdc5;
+      background: #fffbea;
       transform: translateY(-1px);
     }
 
     button:focus-visible {
-      outline: 3px solid rgb(37 99 235 / 30%);
+      outline: 3px solid rgb(255 212 0 / 42%);
       outline-offset: 3px;
     }
 
-    button:disabled {
-      cursor: wait;
-      opacity: 0.65;
+    button:disabled { cursor: wait; opacity: .72; }
+
+    .refresh-icon {
+      display: inline-block;
+      font-size: 18px;
+      line-height: 1;
     }
+
+    button.is-loading .refresh-icon { animation: spin .8s linear infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .table-card {
+      max-width: 100%;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 5px 18px rgb(17 24 39 / 4%);
+    }
+
+    .table-scroll {
+      max-width: 100%;
+      max-height: calc(100vh - 150px);
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cdd4 transparent;
+      overscroll-behavior: contain;
+    }
+
+    .table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-scroll::-webkit-scrollbar-thumb { border: 2px solid #fff; border-radius: 99px; background: #c9cdd4; }
+    .table-scroll::-webkit-scrollbar-track { background: transparent; }
 
     table {
       width: max-content;
       min-width: 100%;
       border-spacing: 0;
       border-collapse: separate;
-      border: 1px solid #dfe4ee;
-      border-radius: 14px;
+      table-layout: fixed;
       background: #fff;
-      box-shadow: 0 12px 32px rgb(31 41 55 / 8%);
     }
 
-    th,
-    td {
-      max-width: 420px;
-      padding: 13px 16px;
-      border-right: 1px solid #e8ebf1;
-      border-bottom: 1px solid #e8ebf1;
-      text-align: left;
-      vertical-align: top;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
+    th, td {
+      min-width: 78px;
+      height: 46px;
+      padding: 10px 12px;
+      border-right: 1px solid #eceef1;
+      border-bottom: 1px solid #eceef1;
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;
+      transition: background-color 160ms ease;
     }
 
-    th:last-child,
-    td:last-child {
-      border-right: 0;
-    }
-
-    tbody tr:last-child td {
-      border-bottom: 0;
-    }
+    th:last-child, td:last-child { border-right: 0; }
+    tbody tr:last-child td { border-bottom: 0; }
 
     thead th {
       position: sticky;
-      z-index: 1;
+      z-index: 4;
       top: 0;
-      color: #334155;
-      background: #eef2f8;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
+      height: 46px;
+      color: #4b5563;
+      background: #f3f4f6;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .015em;
+    }
+
+    th:first-child, td:first-child {
+      position: sticky;
+      left: 0;
+      min-width: 210px;
+      width: 210px;
+      max-width: 230px;
+      border-right-color: #dfe2e6;
+      text-align: left;
+      background: #fbfbfc;
     }
 
     thead th:first-child {
-      border-top-left-radius: 13px;
+      z-index: 6;
+      background: #eef0f3;
     }
 
-    thead th:last-child {
-      border-top-right-radius: 13px;
+    tbody td:first-child {
+      z-index: 2;
+      color: #1f2937;
+      font-size: 14px;
+      font-weight: 560;
+      box-shadow: 3px 0 6px rgb(17 24 39 / 2%);
     }
 
-    tbody tr:nth-child(even) td {
-      background: #fafbfe;
+    tbody tr:hover td { background: #faf8ee; }
+    tbody tr:hover td:first-child { background: #f8f5e8; }
+    tbody td:not(:first-child):hover { background: #fff7cc; }
+
+    .employee-number {
+      display: inline-block;
+      min-width: 28px;
+      margin-right: 8px;
+      color: #9ca3af;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
     }
 
-    tbody tr:hover td {
-      background: #f0f6ff;
+    .value-badge {
+      display: inline-grid;
+      min-width: 27px;
+      height: 26px;
+      padding: 0 7px;
+      place-items: center;
+      border: 1px solid #e5e7eb;
+      border-radius: 7px;
+      color: #4b5563;
+      background: #f7f7f8;
+      font-size: 13px;
+      font-weight: 650;
+      font-variant-numeric: tabular-nums;
     }
 
-    @media (max-width: 640px) {
-      body {
-        padding: 22px 12px 32px;
-      }
+    .value-badge.is-one { color: #374151; background: #f1f2f4; }
+    .value-badge.is-high { border-color: #ead77a; color: #3f3500; background: #fff6c4; }
 
-      th,
-      td {
-        max-width: 280px;
-        padding: 11px 12px;
-        font-size: 14px;
-      }
+    .is-today { background: #fff9dc !important; }
+    thead .is-today::after {
+      display: block;
+      width: 5px;
+      height: 5px;
+      margin: 4px auto -5px;
+      border-radius: 50%;
+      background: #e6b800;
+      content: "";
+    }
+
+    .state-cell {
+      position: static !important;
+      width: auto !important;
+      min-width: min(720px, calc(100vw - 64px)) !important;
+      max-width: none !important;
+      height: 116px;
+      color: #6b7280;
+      text-align: center !important;
+      white-space: normal;
+    }
+
+    @media (max-width: 720px) {
+      main { padding: 20px 12px 24px; }
+      header { align-items: center; gap: 12px; }
+      p { font-size: 13px; }
+      button { padding-inline: 11px; }
+      .table-scroll { max-height: calc(100vh - 130px); }
+      th:first-child, td:first-child { min-width: 184px; width: 184px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+      button.is-loading .refresh-icon { animation-duration: 1.6s; }
     }
   </style>
 </head>
 <body>
-  <h1>Трекер</h1>
-  <button type="button" id="refresh">Обновить</button>
-  <table aria-live="polite">
-    <thead></thead>
-    <tbody><tr><td>Загрузка…</td></tr></tbody>
-  </table>
+  <main>
+    <header>
+      <div>
+        <h1>Progress Tracker</h1>
+        <p>Мониторинг выполнения работ</p>
+      </div>
+      <button type="button" id="refresh" aria-label="Обновить данные">
+        <span class="refresh-icon" aria-hidden="true">↻</span>
+        <span class="button-label">Обновить</span>
+      </button>
+    </header>
+    <section class="table-card" aria-label="Таблица прогресса">
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Прокручиваемая таблица прогресса">
+        <table aria-live="polite">
+          <thead></thead>
+          <tbody><tr><td class="state-cell">Загружаем данные…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
   <script>
     const PUBLIC_KEY = "https://disk.yandex.ru/i/1IK4U63YT280oQ";
     const DOWNLOAD_API = "https://cloud-api.yandex.net/v1/disk/public/resources/download";
 
     const button = document.querySelector("#refresh");
+    const buttonLabel = button.querySelector(".button-label");
     const tableHead = document.querySelector("thead");
     const tableBody = document.querySelector("tbody");
     const frame = document.createElement("iframe");
     let frameReady = false;
     let activeRequest = 0;
+    let buttonResetTimer;
 
     frame.hidden = true;
     frame.setAttribute("sandbox", "allow-scripts");
@@ -198,9 +324,12 @@
     document.body.append(frame);
 
     function showError(message) {
+      const columnCount = Math.max(1, tableHead.querySelectorAll("th").length);
       tableHead.replaceChildren();
       const row = document.createElement("tr");
       const cell = document.createElement("td");
+      cell.className = "state-cell";
+      cell.colSpan = columnCount;
       cell.textContent = "Ошибка: " + message;
       row.append(cell);
       tableBody.replaceChildren(row);
@@ -209,6 +338,75 @@
     function cellText(worksheet, row, column) {
       const cell = worksheet[XLSX.utils.encode_cell({ r: row, c: column })];
       return cell ? XLSX.utils.format_cell(cell) : "";
+    }
+
+    function dateFromCell(cell) {
+      if (!cell) return null;
+      if (cell.t === "d" && cell.v instanceof Date) return cell.v;
+      if (cell.t !== "n" || !cell.z || !XLSX.SSF.is_date(cell.z)) return null;
+      const parts = XLSX.SSF.parse_date_code(cell.v);
+      return parts ? new Date(parts.y, parts.m - 1, parts.d) : null;
+    }
+
+    function isToday(date) {
+      const today = new Date();
+      return date && date.getFullYear() === today.getFullYear()
+        && date.getMonth() === today.getMonth()
+        && date.getDate() === today.getDate();
+    }
+
+    function renderHeaderCell(worksheet, row, column, element) {
+      const sourceCell = worksheet[XLSX.utils.encode_cell({ r: row, c: column })];
+      const date = dateFromCell(sourceCell);
+      element.textContent = date
+        ? new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" }).format(date)
+        : cellText(worksheet, row, column);
+      if (isToday(date)) {
+        element.classList.add("is-today");
+        element.setAttribute("aria-label", element.textContent + ", сегодня");
+      }
+    }
+
+    function renderEmployeeCell(element, value) {
+      const match = value.match(/^(\d{1,3})\s+(.+)$/);
+      if (!match) {
+        element.textContent = value;
+        return;
+      }
+      const number = document.createElement("span");
+      number.className = "employee-number";
+      number.textContent = match[1].padStart(2, "0");
+      element.append(number, match[2]);
+    }
+
+    function renderValueCell(element, value) {
+      if (!/^-?\d+(?:[.,]\d+)?$/.test(value.trim())) {
+        element.textContent = value;
+        return;
+      }
+      const numericValue = Number(value.replace(",", "."));
+      const badge = document.createElement("span");
+      badge.className = "value-badge";
+      if (numericValue === 1) badge.classList.add("is-one");
+      if (numericValue >= 2) badge.classList.add("is-high");
+      badge.textContent = value;
+      element.append(badge);
+    }
+
+    function setLoadingState() {
+      clearTimeout(buttonResetTimer);
+      button.disabled = true;
+      button.classList.add("is-loading");
+      buttonLabel.textContent = "Обновляем";
+    }
+
+    function finishLoading(success) {
+      button.disabled = false;
+      button.classList.remove("is-loading");
+      buttonLabel.textContent = success ? "Обновлено" : "Обновить";
+      if (success) {
+        buttonResetTimer = setTimeout(() => { buttonLabel.textContent = "Обновить"; }, 1800);
+      }
     }
 
     function renderWorkbook(buffer) {
@@ -225,7 +423,7 @@
       for (let column = range.s.c; column <= range.e.c; column += 1) {
         const cell = document.createElement("th");
         cell.scope = "col";
-        cell.textContent = cellText(worksheet, range.s.r, column);
+        renderHeaderCell(worksheet, range.s.r, column, cell);
         headerRow.append(cell);
       }
 
@@ -234,7 +432,12 @@
         const tableRow = document.createElement("tr");
         for (let column = range.s.c; column <= range.e.c; column += 1) {
           const cell = document.createElement("td");
-          cell.textContent = cellText(worksheet, row, column);
+          const value = cellText(worksheet, row, column);
+          if (column === range.s.c) renderEmployeeCell(cell, value);
+          else renderValueCell(cell, value);
+          if (headerRow.children[column - range.s.c].classList.contains("is-today")) {
+            cell.classList.add("is-today");
+          }
           tableRow.append(cell);
         }
         bodyFragment.append(tableRow);
@@ -247,7 +450,7 @@
     function refresh() {
       if (!frameReady) return;
       activeRequest += 1;
-      button.disabled = true;
+      setLoadingState();
       frame.contentWindow.postMessage({
         type: "load-excel",
         requestId: activeRequest,
@@ -268,16 +471,18 @@
       if (event.data.requestId !== activeRequest) return;
 
       if (event.data.type === "excel-loaded") {
+        let rendered = false;
         try {
           renderWorkbook(event.data.buffer);
+          rendered = true;
         } catch (error) {
           showError(error instanceof Error ? error.message : String(error));
         } finally {
-          button.disabled = false;
+          finishLoading(rendered);
         }
       } else if (event.data.type === "excel-error") {
         showError(event.data.message || "Неизвестная ошибка");
-        button.disabled = false;
+        finishLoading(false);
       }
     });
 
