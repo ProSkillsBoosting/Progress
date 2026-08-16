@@ -38,6 +38,9 @@
       margin-bottom: 20px;
     }
 
+    .header-actions { display: flex; align-items: center; gap: 14px; }
+    .updated-at { color: #737373; font-size: 12px; white-space: nowrap; }
+
     h1 {
       margin: 0;
       font-size: clamp(24px, 2.1vw, 30px);
@@ -94,7 +97,34 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    .analytics {
+      display: flex;
+      align-items: stretch;
+      margin: -4px 0 16px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 13px;
+      background: rgb(255 255 255 / 72%);
+    }
+
+    .metric {
+      display: flex;
+      flex: 1 1 auto;
+      min-width: 0;
+      align-items: baseline;
+      gap: 7px;
+      padding: 11px 16px;
+      border-right: 1px solid #eceef1;
+    }
+
+    .metric:last-child { border-right: 0; }
+    .metric-label { color: #737373; font-size: 11px; font-weight: 550; }
+    .metric-value { overflow: hidden; color: #171717; font-size: 14px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+    .metric.leader .metric-value { color: #166534; }
+    .metric.leader .metric-value::before { margin-right: 6px; color: #16a34a; content: "●"; font-size: 7px; vertical-align: 2px; }
+
     .table-card {
+      position: relative;
       max-width: 100%;
       overflow: hidden;
       border: 1px solid #e5e7eb;
@@ -103,9 +133,25 @@
       box-shadow: 0 5px 18px rgb(17 24 39 / 4%);
     }
 
+    .table-card::after {
+      position: absolute;
+      z-index: 8;
+      top: 0;
+      right: 94px;
+      bottom: 8px;
+      width: 22px;
+      pointer-events: none;
+      background: linear-gradient(to right, transparent, rgb(17 24 39 / 8%));
+      opacity: 1;
+      transition: opacity 180ms ease;
+      content: "";
+    }
+
+    .table-card.is-at-end::after { opacity: 0; }
+
     .table-scroll {
       max-width: 100%;
-      max-height: calc(100vh - 150px);
+      max-height: calc(100vh - 188px);
       overflow: auto;
       scrollbar-width: thin;
       scrollbar-color: #c9cdd4 transparent;
@@ -129,8 +175,8 @@
       min-width: 78px;
       height: 46px;
       padding: 10px 12px;
-      border-right: 1px solid #eceef1;
-      border-bottom: 1px solid #eceef1;
+      border-right: 1px solid transparent;
+      border-bottom: 1px solid #eff0f2;
       text-align: center;
       vertical-align: middle;
       white-space: nowrap;
@@ -179,6 +225,8 @@
     tbody tr:hover td { background: #faf8ee; }
     tbody tr:hover td:first-child { background: #f8f5e8; }
     tbody td:not(:first-child):hover { background: #fff7cc; }
+    th.is-column-hover, td.is-column-hover { background: #faf8ee; }
+    thead th.is-column-hover { background: #eaecef; }
 
     .employee-number {
       display: inline-block;
@@ -206,6 +254,40 @@
 
     .value-badge.is-one { color: #374151; background: #f1f2f4; }
     .value-badge.is-high { border-color: #ead77a; color: #3f3500; background: #fff6c4; }
+    .value-badge.is-very-high { border-color: #dfc33f; background: #ffed85; }
+
+    th.is-total, td.is-total {
+      position: sticky;
+      z-index: 3;
+      right: 0;
+      min-width: 94px;
+      width: 94px;
+      border-left: 1px solid #dedfe2;
+      color: #171717;
+      background: #f7f7f5;
+      font-size: 14px;
+      font-weight: 720;
+      box-shadow: -4px 0 8px rgb(17 24 39 / 3%);
+    }
+
+    thead th.is-total { z-index: 7; color: #3f3f46; background: #e9eaec; font-size: 12px; }
+    tbody tr:hover td.is-total { background: #f2f0e5; }
+    td.is-top-employee { color: #166534; background: #ecfdf3; }
+    tbody tr:hover td.is-top-employee { background: #e1f9eb; }
+
+    .rank-badge {
+      display: inline-grid;
+      width: 24px;
+      height: 24px;
+      margin-right: 9px;
+      place-items: center;
+      border: 1px solid #bbebcd;
+      border-radius: 7px;
+      color: #166534;
+      background: #fff;
+      font-size: 11px;
+      font-weight: 750;
+    }
 
     .is-today { background: #fff9dc !important; }
     thead .is-today::after {
@@ -232,9 +314,14 @@
     @media (max-width: 720px) {
       main { padding: 20px 12px 24px; }
       header { align-items: center; gap: 12px; }
+      .header-actions { align-items: flex-end; flex-direction: column-reverse; gap: 5px; }
+      .analytics { flex-wrap: wrap; }
+      .metric { flex: 1 1 50%; }
+      .metric:nth-child(2) { border-right: 0; }
+      .metric:nth-child(-n + 2) { border-bottom: 1px solid #eceef1; }
       p { font-size: 13px; }
       button { padding-inline: 11px; }
-      .table-scroll { max-height: calc(100vh - 130px); }
+      .table-scroll { max-height: calc(100vh - 204px); }
       th:first-child, td:first-child { min-width: 184px; width: 184px; }
     }
 
@@ -251,11 +338,20 @@
         <h1>Progress Tracker</h1>
         <p>Мониторинг выполнения работ</p>
       </div>
-      <button type="button" id="refresh" aria-label="Обновить данные">
-        <span class="refresh-icon" aria-hidden="true">↻</span>
-        <span class="button-label">Обновить</span>
-      </button>
+      <div class="header-actions">
+        <span class="updated-at" id="updated-at" aria-live="polite"></span>
+        <button type="button" id="refresh" aria-label="Обновить данные">
+          <span class="refresh-icon" aria-hidden="true">↻</span>
+          <span class="button-label">Обновить</span>
+        </button>
+      </div>
     </header>
+    <section class="analytics" aria-label="Краткая аналитика">
+      <div class="metric"><span class="metric-label">Обучающиеся</span><span class="metric-value" id="employee-count">—</span></div>
+      <div class="metric"><span class="metric-label">Количество уроков</span><span class="metric-value" id="date-count">—</span></div>
+      <div class="metric leader"><span class="metric-label">Лидер</span><span class="metric-value" id="leader">—</span></div>
+      <div class="metric"><span class="metric-label">Лучший результат</span><span class="metric-value" id="best-result">—</span></div>
+    </section>
     <section class="table-card" aria-label="Таблица прогресса">
       <div class="table-scroll" tabindex="0" role="region" aria-label="Прокручиваемая таблица прогресса">
         <table aria-live="polite">
@@ -274,6 +370,13 @@
     const buttonLabel = button.querySelector(".button-label");
     const tableHead = document.querySelector("thead");
     const tableBody = document.querySelector("tbody");
+    const tableScroll = document.querySelector(".table-scroll");
+    const tableCard = document.querySelector(".table-card");
+    const updatedAt = document.querySelector("#updated-at");
+    const employeeCount = document.querySelector("#employee-count");
+    const dateCount = document.querySelector("#date-count");
+    const leader = document.querySelector("#leader");
+    const bestResult = document.querySelector("#best-result");
     const frame = document.createElement("iframe");
     let frameReady = false;
     let activeRequest = 0;
@@ -333,6 +436,10 @@
       cell.textContent = "Ошибка: " + message;
       row.append(cell);
       tableBody.replaceChildren(row);
+      employeeCount.textContent = "—";
+      dateCount.textContent = "—";
+      leader.textContent = "—";
+      bestResult.textContent = "—";
     }
 
     function cellText(worksheet, row, column) {
@@ -348,6 +455,20 @@
       return parts ? new Date(parts.y, parts.m - 1, parts.d) : null;
     }
 
+    function dateFromText(value) {
+      const text = value.trim();
+      let match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+      if (match) {
+        const year = Number(match[3]) + (match[3].length === 2 ? 2000 : 0);
+        return new Date(year, Number(match[1]) - 1, Number(match[2]));
+      }
+      match = text.match(/^(\d{1,2})[.](\d{1,2})(?:[.](\d{2}|\d{4}))?$/);
+      if (!match) return null;
+      const currentYear = new Date().getFullYear();
+      const year = match[3] ? Number(match[3]) + (match[3].length === 2 ? 2000 : 0) : currentYear;
+      return new Date(year, Number(match[2]) - 1, Number(match[1]));
+    }
+
     function isToday(date) {
       const today = new Date();
       return date && date.getFullYear() === today.getFullYear()
@@ -357,7 +478,9 @@
 
     function renderHeaderCell(worksheet, row, column, element) {
       const sourceCell = worksheet[XLSX.utils.encode_cell({ r: row, c: column })];
-      const date = dateFromCell(sourceCell);
+      const originalText = cellText(worksheet, row, column);
+      const date = dateFromCell(sourceCell) || dateFromText(originalText);
+      element.dataset.isDate = String(Boolean(date));
       element.textContent = date
         ? new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" }).format(date)
         : cellText(worksheet, row, column);
@@ -368,15 +491,12 @@
     }
 
     function renderEmployeeCell(element, value) {
-      const match = value.match(/^(\d{1,3})\s+(.+)$/);
+      const match = value.match(/^(\d{1,3})[.)]?\s+(.+)$/);
       if (!match) {
         element.textContent = value;
         return;
       }
-      const number = document.createElement("span");
-      number.className = "employee-number";
-      number.textContent = match[1].padStart(2, "0");
-      element.append(number, match[2]);
+      element.textContent = match[2];
     }
 
     function renderValueCell(element, value) {
@@ -389,6 +509,7 @@
       badge.className = "value-badge";
       if (numericValue === 1) badge.classList.add("is-one");
       if (numericValue >= 2) badge.classList.add("is-high");
+      if (numericValue >= 4) badge.classList.add("is-very-high");
       badge.textContent = value;
       element.append(badge);
     }
@@ -405,8 +526,67 @@
       button.classList.remove("is-loading");
       buttonLabel.textContent = success ? "Обновлено" : "Обновить";
       if (success) {
+        updatedAt.textContent = "Обновлено " + new Intl.DateTimeFormat("ru-RU", {
+          hour: "2-digit", minute: "2-digit"
+        }).format(new Date());
         buttonResetTimer = setTimeout(() => { buttonLabel.textContent = "Обновить"; }, 1800);
       }
+    }
+
+    function numericValue(value) {
+      const normalized = value.replace(/[\s\u00a0]/g, "").replace(",", ".");
+      if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) return null;
+      const result = Number(normalized);
+      return Number.isFinite(result) ? result : null;
+    }
+
+    function employeeName(value) {
+      const match = value.trim().match(/^\d{1,3}[.)]?\s+(.+)$/);
+      return match ? match[1] : value.trim();
+    }
+
+    function updateScrollHint() {
+      const atEnd = tableScroll.scrollLeft + tableScroll.clientWidth >= tableScroll.scrollWidth - 2;
+      tableCard.classList.toggle("is-at-end", atEnd || tableScroll.scrollWidth <= tableScroll.clientWidth);
+    }
+
+    function updateDashboardUI(rows, headers) {
+      const datedHeaders = headers.filter((header, index) => index > 0 && index < headers.length - 1 && header.dataset.isDate === "true");
+      const ranked = rows.filter(item => item.score !== null)
+        .slice()
+        .sort((a, b) => b.score - a.score || a.index - b.index);
+
+      const topFour = ranked.slice(0, 4);
+      const topFourSet = new Set(topFour);
+      const remaining = rows.filter(item => !topFourSet.has(item)).sort((a, b) =>
+        employeeName(a.name).localeCompare(employeeName(b.name), "ru", { sensitivity: "base" })
+      );
+      const employeeRowSet = new Set(rows.map(item => item.tableRow));
+      const serviceRows = [...tableBody.rows].filter(row => !employeeRowSet.has(row));
+      tableBody.replaceChildren(
+        ...topFour.map(item => item.tableRow),
+        ...remaining.map(item => item.tableRow),
+        ...serviceRows
+      );
+
+      topFour.forEach((item, index) => {
+        item.employeeCell.classList.add("is-top-employee");
+        const rank = document.createElement("span");
+        rank.className = "rank-badge";
+        rank.textContent = String(index + 1);
+        rank.setAttribute("aria-label", "Место " + (index + 1));
+        item.employeeCell.prepend(rank);
+      });
+
+      employeeCount.textContent = String(rows.length);
+      dateCount.textContent = String(datedHeaders.length);
+      leader.textContent = ranked.length ? employeeName(ranked[0].name) + " · " + ranked[0].displayScore : "—";
+      bestResult.textContent = ranked.length ? ranked[0].displayScore : "—";
+      requestAnimationFrame(() => {
+        tableScroll.scrollTop = 0;
+        tableScroll.scrollLeft = 0;
+        updateScrollHint();
+      });
     }
 
     function renderWorkbook(buffer) {
@@ -419,32 +599,66 @@
 
       const range = XLSX.utils.decode_range(worksheet["!ref"]);
       const headerRow = document.createElement("tr");
+      const employeeRows = [];
 
       for (let column = range.s.c; column <= range.e.c; column += 1) {
         const cell = document.createElement("th");
         cell.scope = "col";
         renderHeaderCell(worksheet, range.s.r, column, cell);
+        if (column === range.s.c && !cell.textContent.trim()) cell.textContent = "Сотрудник";
+        if (column === range.e.c) {
+          cell.classList.add("is-total");
+          if (!cell.textContent.trim()) cell.textContent = "Итого";
+        }
         headerRow.append(cell);
       }
 
       const bodyFragment = document.createDocumentFragment();
       for (let row = range.s.r + 1; row <= range.e.r; row += 1) {
         const tableRow = document.createElement("tr");
+        const name = cellText(worksheet, row, range.s.c);
+        let employeeCell;
+        let displayScore = "";
         for (let column = range.s.c; column <= range.e.c; column += 1) {
           const cell = document.createElement("td");
           const value = cellText(worksheet, row, column);
-          if (column === range.s.c) renderEmployeeCell(cell, value);
-          else renderValueCell(cell, value);
+          if (column === range.s.c) {
+            employeeCell = cell;
+            renderEmployeeCell(cell, value);
+          } else if (column === range.e.c) {
+            cell.textContent = value;
+          } else {
+            renderValueCell(cell, value);
+          }
+          if (column === range.e.c) {
+            cell.classList.add("is-total");
+            displayScore = value;
+          }
           if (headerRow.children[column - range.s.c].classList.contains("is-today")) {
             cell.classList.add("is-today");
           }
+          if (column > range.s.c && name.trim()) {
+            const header = headerRow.children[column - range.s.c].textContent.trim();
+            cell.title = employeeName(name) + (header ? " × " + header : "");
+          }
           tableRow.append(cell);
+        }
+        if (/^\d{1,3}[.)]?\s+\S/.test(name.trim())) {
+          employeeRows.push({
+            index: employeeRows.length,
+            name,
+            tableRow,
+            employeeCell,
+            score: numericValue(displayScore),
+            displayScore
+          });
         }
         bodyFragment.append(tableRow);
       }
 
       tableHead.replaceChildren(headerRow);
       tableBody.replaceChildren(bodyFragment);
+      updateDashboardUI(employeeRows, [...headerRow.children]);
     }
 
     function refresh() {
@@ -486,6 +700,21 @@
       }
     });
 
+    tableScroll.addEventListener("scroll", updateScrollHint, { passive: true });
+    tableScroll.addEventListener("pointerover", (event) => {
+      const cell = event.target.closest("th, td");
+      if (!cell || !cell.parentElement) return;
+      const column = cell.cellIndex;
+      document.querySelectorAll(".is-column-hover").forEach(item => item.classList.remove("is-column-hover"));
+      document.querySelectorAll("tr").forEach(row => {
+        if (row.cells[column]) row.cells[column].classList.add("is-column-hover");
+      });
+    });
+    tableScroll.addEventListener("pointerleave", () => {
+      document.querySelectorAll(".is-column-hover").forEach(item => item.classList.remove("is-column-hover"));
+    });
+
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     button.addEventListener("click", refresh);
   </script>
 </body>
